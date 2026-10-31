@@ -6,6 +6,10 @@ global fill_screen
 global step1
 global step2
 global red
+global red_german
+global yellow_german
+global clean_screen
+global next_flag
 global exit
 
 saved_mode:             db              0 ; nothing until we save the mode
@@ -60,26 +64,58 @@ set_video_mode:
         int 0x10
         ret
 
+clean_screen:
+        mov di, 0
+        mov cx, 0
+        mov ax, 0xA000
+        mov es, ax
+        jmp loop
+
+loop:
+        mov byte [es:di], 0x00
+        inc di
+        inc cx
+        cmp cx, 320*200
+                je red_german
+        jne loop
+
 exit:
          call red
- ;        mov ah, 0x00
-  ;       int 0x16
-;        cmp ah, 0x01
-;        jmp restore_default_video_mode
-
-;        mov al, [saved_mode]
- ;       call set_video_mode
-
-;        mov ah, 4Ch
- ;       int 21h
-
 red:
         mov byte [es:di], 0x0C
         inc cx
         inc di
         cmp cx, 320*198
-                je restore_default_video_mode
+                je next_flag
         jne red
+
+red_german:
+        mov cx, 0
+        mov di, 320*66
+        mov ax, 0xA000
+        mov es, ax
+        jmp red_german_loop
+
+red_german_loop:
+        mov byte [es:di], 0x0C
+        inc di
+        inc cx
+        cmp cx, 320*66
+                je yellow_german
+        jne red_german_loop        
+
+yellow_german:
+        mov byte [es:di], 0x0E
+        inc di
+        inc cx
+        cmp cx, 320*132
+                je restore_default_video_mode
+        jne yellow_german
+
+next_flag:
+        mov ah, 0x00
+        int 0x16
+        call clean_screen
 
 restore_default_video_mode:
         mov ah, 0x00
